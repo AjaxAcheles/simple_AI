@@ -38,6 +38,13 @@ class LayerSoftmax(Layer):
         exp_func_values = np.exp(outputs - np.max(outputs, axis=1, keepdims=True))
         normalized_values = exp_func_values / np.sum(exp_func_values, axis=1, keepdims=True)
         return normalized_values
+
+class LayerSigmoid(Layer):
+    def activation_function(self, outputs):
+        # sigmoid activation function
+        return 1 / (1 + np.exp(-outputs))
+
+
 ##################### LOSS ##############################
 class Loss:
     def calculate(self, output, target):
@@ -93,7 +100,17 @@ class Backpropagation:
 
 
     def backpropagate(self):
-        # 
+        print(f'y_prediction: {self.y_prediction}')
+        print(f'y_true: {self.y_true}')
+        # calculate gradient
+        pass
+
+    def update_weights(self):
+        # update weights
+        pass
+    
+    def update_biases(self):
+        # update biases
         pass
     
 ################### INPUTS ###################
