@@ -9,12 +9,12 @@ class Layer:
     # n_inputs is the number of inputs to the layer
     # n_neurons is the number of neurons in the layer
     def __init__(self, n_inputs, n_neurons):
-        self.weights = (0.1 * np.random.randn(n_inputs, n_neurons)).T ######################### added .T
+        self.weights = (0.1 * np.random.randn(n_neurons, n_inputs))
         # a bias of 0 is assigned to each neuron in the layer
         self.biases = np.zeros((1, n_neurons))
 
     def forward(self, inputs):
-        neural_network_output = np.dot(inputs, self.weights.T) + self.biases #################### added .T
+        neural_network_output = np.dot(inputs, self.weights.T) + self.biases
         self.output = self.activation_function(neural_network_output)
 
     def activation_function(self, output):
@@ -89,7 +89,12 @@ class LossMSE(Loss):
     # MSE stands for Mean Squared Error
     def loss_function(self, y_prediction, y_true):
         one_hot_y_true = convert_to_one_hot(y_true)
-        loss = np.mean((y_prediction - one_hot_y_true) ** 2, axis=1)
+
+        try:
+            loss = np.mean((y_prediction - one_hot_y_true) ** 2, axis=1)
+        except:
+            error = "y classes and last layer output neurons must be the same number."
+            raise error
         return loss
     
 ############ Backpropagation #################
@@ -120,7 +125,7 @@ class Backpropagation:
             # else, get the dot product of the last known dL_dout and the weights of the last layer
             else:
                 dL_dout = np.dot(saved_dL_dout[current_layer_index + 1], 
-                                self.layers[current_layer_index + 1].weights) ################################## removed .T
+                                self.layers[current_layer_index + 1].weights.T)
             
             # convert `dL_dout` to numpy array
             dL_dout = np.array(dL_dout)
@@ -138,20 +143,21 @@ class Backpropagation:
                 dout_din = layer.output * (1 - layer.output)
                 
             elif layer.activation_function_name == "Softmax":
-                dout_din = layer.output
+                dout_din = np.log(layer.output)
+
+            # convert `dout_din` to numpy array
             dout_din = np.array(dout_din)
+            print("dout_din", dout_din)
             
             # apply chain rule
             dL_din = dL_dout * dout_din
-
-            print(f"layer {current_layer_index} ({layer.activation_function_name}) output", 
-                  layer.output)
-            print(f"layer {current_layer_index} ({layer.activation_function_name}) shape", 
-                  layer.output.shape)
-
+            
             # compute new weights and biases for current layer
             dL_dw = np.dot(dL_din.T, layer.output)
             dL_db = np.sum(dL_din, axis=0)
+
+            print("dL_dout", dL_dout)
+            print("weights", layer.weights)
 
             # update weights and biases
             layer.weights = dL_dw - layer.weights
@@ -216,8 +222,8 @@ X, y = spiral_data(samples=1, classes=2)
 #############################################
 
 # init layers
-layer1_ReLU = LayerReLU(2, 1)
-layer2_sigmoid = LayerSigmoid(1, 1)
+layer1_ReLU = LayerReLU(2, 4)
+layer2_sigmoid = LayerSigmoid(4, 2)
 # forward pass
 layer1_ReLU.forward(X)
 layer2_sigmoid.forward(layer1_ReLU.output)
