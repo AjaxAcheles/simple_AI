@@ -25,6 +25,8 @@ X = [
             [1.0], # data at time 19
             [0.0] # data at time 20
 ]
+X =  np.array(X)
+
 y = [
     [0.0], # data at time 1
     [1.0], # data at time 2
@@ -47,6 +49,7 @@ y = [
     [0.0], # data at time 19
     [1.0] # data at time 20
 ]
+y = np.array(y)
 #############################################
 def sigmoid_function(x):
     return 1 / (1 + np.exp(-x))
@@ -54,12 +57,14 @@ def sigmoid_function(x):
 ################### LAYER ONE ###################
 # each row is a neuron in which each element is a different neuron's weights for each input.
 weights1 = [
-            [-1.0], # weight from neuron 0 (input neuron) to neuron 1 in layer 1
+            [0.0], # weight from neuron 0 (input neuron) to neuron 1 in layer 1
 ]
+weights1 = np.array(weights1)
 # each element is the bias of an individual neuron 
 bias1 = [
-        0, # neuron 1 in layer 1
+        0.0, # neuron 1 in layer 1
 ]
+bias1 = np.array(bias1)
 # transpose weights matrix so that the network can eval the proper time snapshots of data.
 # aka: so that the dot product works.
 output1 = np.dot(X, np.array(weights1).T) + bias1
@@ -72,37 +77,47 @@ print("Layer 1 Output:", output1)
 inputs2 = output1
 
 weights2 = [
-            [4], # weight from neuron 1 in layer 1 to neuron 2 in layer 2 (output neuron)
+            [0.11], # weight from neuron 1 in layer 1 to neuron 2 in layer 2 (output neuron)
 
 ]
+weights2 = np.array(weights2)
 
 bias2 = [
-        0, # neuron 2
+        0.22, # neuron 2
 ]
+bias2 = np.array(bias2)
 
 # ReLU
 output2 = np.dot(inputs2, np.array(weights2).T) + bias2
 print("Layer 2 Output:", output2)
 ################### END OF OUTPUT LAYER ###################
 
-################### Backpropagation for weights ###################
+################### Backpropagation ###################
 
-dcda = 2.0*(output2 - y)
-dadz = (sigmoid_function(output2) - 1.0) / sigmoid_function(output2)
-dzdw = output1
+# Assume you have a loss function that computes the mean squared error between the output and the target
+loss = np.mean((output2 - y) ** 2)
 
-dcdw = dzdw*dadz*dcda
+# Compute the gradients of the loss with respect to the weights and biases of each layer using the chain rule
+# For simplicity, I will use the variable names dL_dw1, dL_db1, dL_dw2, dL_db2 to denote these gradients
 
-nudge =  np.sum(dcdw) / len(dcdw)
-print("Weights Nudge:", nudge)
+# Layer 2 gradients
+dL_dout2 = 2 * (output2 - y) # derivative of MSE loss with respect to output2
+dout2_din2 = np.where(inputs2 > 0, 1, 0) # derivative of ReLU activation with respect to inputs2
+dL_din2 = dL_dout2 * dout2_din2 # chain rule
+dL_dw2 = np.dot(dL_din2.T, output1) # derivative of inputs2 with respect to weights2
+dL_db2 = np.sum(dL_din2, axis=0) # derivative of inputs2 with respect to bias2
 
-################### Backpropagation for biases ###################
+# Layer 1 gradients
+dL_dout1 = np.dot(dL_din2, weights2.T) # derivative of loss with respect to output1
+dout1_din1 = output1 * (1 - output1) # derivative of sigmoid activation with respect to output1
+dL_din1 = dL_dout1 * dout1_din1 # chain rule
+dL_dw1 = np.dot(dL_din1.T, X) # derivative of output1 with respect to weights1
+dL_db1 = np.sum(dL_din1, axis=0) # derivative of output1 with respect to bias1
 
-dcda = 2.0*(output2 - y)
-dadz = (sigmoid_function(output2) - 1.0) / sigmoid_function(output2)
-dzdb = 1
+# Update the weights and biases of each layer using a learning rate
+lr = 0.01 # you can choose a different value for this
+weights2 -= lr * dL_dw2 # gradient descent update
+bias2 -= lr * dL_db2
+weights1 -= lr * dL_dw1
+bias1 -= lr * dL_db1
 
-dcdb = dzdb*dadz*dcda
-
-nudge =  np.sum(dcdw) / len(dcdw)
-print("Biases Nudge:", nudge)
