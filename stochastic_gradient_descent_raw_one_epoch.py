@@ -5,10 +5,16 @@ from random import randint
 
 def make_data_set(number_of_points):
     X = [randint(0, 1) for index in range(number_of_points)]
+    print("X generated.")
     y = [(-1 * (data_point - 1)) for data_point in X]
     return X, y
 
-X, y = make_data_set(10000)
+# 100 mill
+sample_size = 100000
+X, y = make_data_set(sample_size)
+
+# one alert for every n passes completed
+alert_frequency = 1000
 
 
 # retrive weights and biases from file and re-assign values to neural network variables
@@ -38,7 +44,7 @@ for index in range(len(X) - 1):
     
     # backward pass
     c = math.pow(r3 - y_true, 2)
-    learning_rate = 0.1
+    learning_rate = 0.001
     
     # output layer
     dc_dr3 = 2 * (r3 - y_true)
@@ -80,6 +86,8 @@ for index in range(len(X) - 1):
     b2 = b2 - learning_rate * dc_db2
     w3 = w3 - learning_rate * dc_dw3
     b3 = b3 - learning_rate * dc_db3
+    if index % alert_frequency == 0:
+        print((index / sample_size) * 100, "%", "complete", f"({index} / {sample_size})")
     
 # final test forward pass
     z1 = X[-1] * w1 + b1
